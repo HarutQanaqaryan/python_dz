@@ -104,5 +104,13 @@ def main() -> None:
             print("Неверный пункт меню.")
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
+
+s = {1, 3, 4}
+
+s.update([6, 7])
+s.add(8)
+s.remove(1)
+s.discard(3)
+print(s)
