@@ -1,9 +1,9 @@
-from typing import TypedDict, Optional, NotRequired, Unpack
+from typing import TypedDict, Optional, NotRequired, Unpack, List
 from datetime import datetime, timezone
+import uuid
 
-# --- ТИПЫ ---
 class Order(TypedDict):
-    id: int
+    id: str
     title: str
     amount: float
     email: str
@@ -14,41 +14,37 @@ class Order(TypedDict):
     closed_at: Optional[str]
 
 class OrderOptionalFields(TypedDict):
-    """Поля, которые можно опционально передать при создании или редактировании."""
     status: NotRequired[str]
     tags: NotRequired[set[str]]
     due: NotRequired[Optional[str]]
 
+# Глобальное хранилище
+orders: List[Order] = []
 
-# --- ХРАНИЛИЩЕ ---
-orders: list[Order] = []
+def list_orders() -> List[Order]:
+    """Возвращает список всех заказов."""
+    return orders
 
 
-# --- МЕТОДЫ ---
 def create_order(
     title: str, 
     amount: float, 
     email: str, 
     **kwargs: Unpack[OrderOptionalFields]
 ) -> Order:
-    """Создает новый заказ и сохраняет его в списке."""
-    # Генерируем новый ID
-    new_id = max([o["id"] for o in orders], default=0) + 1
-    
-    # Базовая структура
+    """Создает новый заказ с UUID."""
     order: Order = {
-        "id": new_id,
+        "id": str(uuid.uuid4()),  # Генерируем UUID вместо int
         "title": title,
         "amount": amount,
         "email": email,
-        "status": "new",                    # статус по умолчанию
-        "tags": set(),                      # пустое множество тегов
+        "status": "new",
+        "tags": set(),
         "created_at": datetime.now(timezone.utc).isoformat(),
         "due": None,
         "closed_at": None
     }
     
-    # Обновляем опциональные поля, если они переданы в kwargs
     for key, value in kwargs.items():
         order[key] = value
             
@@ -56,23 +52,17 @@ def create_order(
     return order
 
 
-def list_orders() -> list[Order]:
-    """Возвращает список всех заказов."""
-    return orders
-
-
 def edit_order(
-    order_id: int, 
+    order_id: str, 
     **kwargs: Unpack[OrderOptionalFields]
 ) -> Optional[Order]:
-    """Редактирует заказ по ID. Возвращает обновленный заказ или None."""
+    """Редактирует заказ по UUID."""
     for order in orders:
         if order["id"] == order_id:
-            # Обновляем переданные поля
             for key, value in kwargs.items():
                 order[key] = value
             
-            # Логика автоматического обновления даты закрытия
+            # Логика закрытия заказа
             if order["status"] in ("done", "cancelled"):
                 if order["closed_at"] is None:
                     order["closed_at"] = datetime.now(timezone.utc).isoformat()
@@ -83,10 +73,15 @@ def edit_order(
     return None
 
 
-def remove_order(order_id: int) -> bool:
-    """Удаляет заказ по ID. Возвращает True при успехе, иначе False."""
+def remove_order(order_id: str) -> bool:
     for i, order in enumerate(orders):
         if order["id"] == order_id:
             orders.pop(i)
             return True
     return False
+
+def get_order(order_id: str) -> Optional[Order]:
+    for order in orders:
+        if order["id"] == order_id:
+            return order
+    return None
