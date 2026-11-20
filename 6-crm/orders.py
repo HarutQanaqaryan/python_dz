@@ -21,6 +21,10 @@ class OrderOptionalFields(TypedDict):
 # Глобальное хранилище
 orders: List[Order] = []
 
+def list_orders() -> List[Order]:
+    """Возвращает список всех заказов."""
+    return orders
+
 
 def create_order(
     title: str, 
