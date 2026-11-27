@@ -1,0 +1,2 @@
+[console_scripts]
+monitoring = monitoring.__main__:main
